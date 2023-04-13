@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4a4722b887ab7f489a27631a3995368, type: 3}
+  m_Name: Hearthy Bow
+  m_EditorClassIdentifier: 
+  id: 2
+  ItemName: Bow
+  Icon: {fileID: 21300000, guid: 3c7f7c1bdf205ff48a82cc4a550c7418, type: 3}
+  rarity: 7
+  MaximumStacks: 1
+  EquipmentType: 0
+  DegreeOffset: 45
+  damage: 22
+  bowPower: 5
+  bowSpeed: 1
+  bowMaxCharge: 1
+  ammo: {fileID: 11400000, guid: ac2af2d840daf2b40bc872a0cdf84e9e, type: 2}
+  arrowPrefab: {fileID: 6235680683877683861, guid: 430adc7020d320745b5608ae26da7723, type: 3}

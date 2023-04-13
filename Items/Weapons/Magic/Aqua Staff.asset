@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a68bd40ec19d41a4c85285a53ab26f58, type: 3}
+  m_Name: Aqua Staff
+  m_EditorClassIdentifier: 
+  id: 
+  ItemName: Aqua Staff
+  Icon: {fileID: 21300000, guid: a6fba4918e965084eb88d9c3443f473c, type: 3}
+  rarity: 3
+  MaximumStacks: 1
+  EquipmentType: 0
+  DegreeOffset: 45
+  damage: 33
+  manaCost: 7
+  castSpeed: 22
+  magic: {fileID: 11400000, guid: 90232d323e35fe2478a9037b45e3967e, type: 2}
+  prefab: {fileID: 990402569111725196, guid: 8044a142c9089dc44933d75d8137e03b, type: 3}
