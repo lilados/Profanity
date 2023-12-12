@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace Profanity;
-class Input
+public class Input
 {
     public const ButtonState ButtonUp = ButtonState.Released;
     public const ButtonState ButtonDown = ButtonState.Pressed;

@@ -1,2 +1,2 @@
-﻿using var game = new Profanity.Game1();
+﻿using var game = new Profanity.Profanity();
 game.Run();

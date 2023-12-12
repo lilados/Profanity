@@ -1,6 +1,6 @@
 namespace Profanity.Components;
 
-public class Object
+public class Terrain : Component
 {
     
 }
