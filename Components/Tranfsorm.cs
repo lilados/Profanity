@@ -10,7 +10,7 @@ class Transform : Component
     public Transform(){
         position = Vector3.Zero;
         rotation = Vector3.Zero;
-        scale = Vector3.One;
+        scale = Vector3.One * 100;
     }
     public override string ToString()
     {

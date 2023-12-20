@@ -8,7 +8,7 @@ using Profanity.Components;
 using Component = Profanity.Components.Component;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
-class Obj
+public class Obj
 {
     public List<Component> components = new List<Component>();
     public Obj GameObject;
@@ -69,7 +69,7 @@ class Obj
     {
         Model model = GetComponent<Model3D>()._model;
         Transform trs = GetComponent<Transform>();
-        Matrix worldMatrix = Matrix.CreateScale(new Vector3(0.01f,0.01f,0.01f) * trs.scale) * Matrix.CreateTranslation(trs.position);
+        Matrix worldMatrix = Matrix.CreateScale(new Vector3(0.010f,0.001f,0.001f) * trs.scale) * Matrix.CreateTranslation(trs.position);
         
 
         Matrix[] modelTransforms = new Matrix[model.Bones.Count];
@@ -89,6 +89,7 @@ class Obj
             mesh.Draw();
         }
     }
+    
 
     public void Draw(Camera camera)
     {

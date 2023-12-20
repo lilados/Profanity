@@ -9,21 +9,21 @@ namespace Profanity;
 public class Profanity : Game
 {
     private const int ScreenWidth = 1920, ScreenHeight = 1080;
-    private GraphicsDevice gpu;
-    private SpriteFont font;
+    
+    public static GraphicsDevice gpu;
+    public static Camera _camera;
+    
     public static int screenW, screenH;
     private GraphicsDevice _device;
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
-    public static Camera _camera;
     private Input inp;
     private RenderTarget2D MainTarget;
 
 
     private Texture2D _texture;
     public static Effect effect;
-
-    private VertexPositionTexture[] _vertices;
+    
 
     private Rectangle desktopRect;
     private Rectangle screenRect;
@@ -44,7 +44,7 @@ public class Profanity : Game
 
         Window.IsBorderless = true;
         Content.RootDirectory = "Content";
-        IsMouseVisible = true;
+        IsMouseVisible = true;  
         General.content = Content;
     }
 
@@ -59,47 +59,15 @@ public class Profanity : Game
         desktopRect = new Rectangle(0, 0, pp.BackBufferWidth, pp.BackBufferHeight);
         screenRect = new Rectangle(0, 0, screenW, screenH);
         _camera = new Camera(gpu, Vector3.Up);
-        _camera.target = new Vector3(0,0,0);
         inp = new Input(pp, MainTarget);
         _device = _graphics.GraphicsDevice;
         base.Initialize();
     }
-    private void SetUpVertices(){
-        _vertices = new VertexPositionTexture[6];
-
-        _vertices[0].Position = new Vector3(-10f, 10f, 0f);
-            _vertices[0].TextureCoordinate.X = 0;
-            _vertices[0].TextureCoordinate.Y = 0;
-
-            _vertices[1].Position = new Vector3(10f, -10f, 0f);
-            _vertices[1].TextureCoordinate.X = 1;
-            _vertices[1].TextureCoordinate.Y = 1;
-
-            _vertices[2].Position = new Vector3(-10f, -10f, 0f);
-            _vertices[2].TextureCoordinate.X = 0;
-            _vertices[2].TextureCoordinate.Y = 1;
-
-            _vertices[3].Position = new Vector3(10.0f, -10.0f, 0f);
-            _vertices[3].TextureCoordinate.X = 1;
-            _vertices[3].TextureCoordinate.Y = 1;
-
-            _vertices[4].Position = new Vector3(-10.0f, 10.0f, 0f);
-            _vertices[4].TextureCoordinate.X = 0;
-            _vertices[4].TextureCoordinate.Y = 0;
-
-            _vertices[5].Position = new Vector3(10.0f, 10.0f, 0f);
-            _vertices[5].TextureCoordinate.X = 1;
-            _vertices[5].TextureCoordinate.Y = 0;
-    }
-
     protected override void LoadContent()
     {
-        font = Content.Load<SpriteFont>("Font");
         effect = Content.Load<Effect>("effects");
-        _texture = Content.Load<Texture2D>("riemerstexture");
-        //SetUpVertices();
 
-        obj.AddComponent<Model3D>().SetModel("drzewko", effect);
+        obj.AddComponent<Model3D>().SetModel("kuklafbx", effect);
     }
 
     protected override void Update(GameTime gameTime)
@@ -114,7 +82,7 @@ public class Profanity : Game
                 -GamePad.GetState(0).ThumbSticks.Left.Y * 4);
         }else
         {
-            _camera.pos += new Vector3(-GamePad.GetState(0).ThumbSticks.Left.X * 2, GamePad.GetState(0).ThumbSticks.Right.Y *4,
+            _camera.GetComponent<Transform>().position += new Vector3(-GamePad.GetState(0).ThumbSticks.Left.X * 2, GamePad.GetState(0).ThumbSticks.Right.Y *4,
                 -GamePad.GetState(0).ThumbSticks.Left.Y * 4);
         }
 
@@ -132,16 +100,56 @@ public class Profanity : Game
         }
     }
 
+    private void DrawModel2(Model model)
+    {
+        Matrix[] modelTransforms = new Matrix[model.Bones.Count];
+        model.CopyAbsoluteBoneTransformsTo(modelTransforms);
+        
+        foreach (ModelMesh mesh in model.Meshes)
+        {
+            foreach (ModelMeshPart meshPart in mesh.MeshParts)
+            {
+                var effect2 = meshPart.Effect;
+
+                BasicEffect basicEffect = effect2 as BasicEffect;
+                if (basicEffect != null)
+                {
+                    basicEffect.World = modelTransforms[mesh.ParentBone.Index] * Matrix.CreateScale(new Vector3(0.01f,0.01f,0.01f)) * Matrix.Identity;
+                    basicEffect.EnableDefaultLighting();
+                    basicEffect.DirectionalLight0.Direction = new Vector3(4, -1, 2);
+                    basicEffect.Projection = _camera.proj;
+                    basicEffect.View = _camera.view;
+                    basicEffect.Alpha = 1.0f;
+                }
+                else
+                {
+                    effect2.CurrentTechnique = effect2.Techniques["Colored"];
+                    effect2.Parameters["xEnableLighting"].SetValue(true);
+                    effect2.Parameters["xLightDirection"].SetValue(new Vector3(0,-2,5));
+                    effect2.Parameters["xWorld"].SetValue(modelTransforms[mesh.ParentBone.Index] * Matrix.Identity);
+                    effect2.Parameters["xView"].SetValue(_camera.view);
+                    effect2.Parameters["xProjection"].SetValue(_camera.proj);
+                }
+                gpu.SetVertexBuffer(meshPart.VertexBuffer);
+                gpu.Indices = meshPart.IndexBuffer;
+                foreach (var pass in effect2.CurrentTechnique.Passes)    
+                {
+                    pass.Apply();
+                    gpu.DrawIndexedPrimitives(PrimitiveType.TriangleList, meshPart.VertexOffset, meshPart.StartIndex, meshPart.PrimitiveCount);
+                }
+            }
+        }
+    }
+
     protected override void Draw(GameTime gameTime)
     {
         gpu.SetRenderTarget(MainTarget);
-
         Set3DStates();
         gpu.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
-        
-        obj.Draw(_camera);
 
-        //Draw mainTarget To BackBuffer
+        DrawModel2(Content.Load<Model>("drz"));
+        //obj.Draw(_camera);
+        
         gpu.SetRenderTarget(null);
         _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Opaque, SamplerState.LinearWrap, DepthStencilState.None,
             RasterizerState.CullNone);
