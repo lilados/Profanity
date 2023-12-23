@@ -14,30 +14,34 @@ public class Profanity : Game
     public static Camera _camera;
     
     public static int screenW, screenH;
-    private GraphicsDevice _device;
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
     private Input inp;
     private RenderTarget2D MainTarget;
 
+    private VertexPositionColor[] _vert;
 
     private Texture2D _texture;
     public static Effect effect;
-    
+
+    private float moveSpeed = 1;
 
     private Rectangle desktopRect;
     private Rectangle screenRect;
 
     private Obj obj = new Obj();
+    private Obj obj2 = new Obj();
+
+    private float camAngle = MathF.PI/2;
 
     public Profanity()
     {
-        int desktop_width = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - 10;
-        int desktop_height = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 10;
+        int desktop_width = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - 100;
+        int desktop_height = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
         _graphics = new GraphicsDeviceManager(this)
         {
-            PreferredBackBufferWidth = desktop_width,
-            PreferredBackBufferHeight = desktop_height,
+            PreferredBackBufferWidth = 500,
+            PreferredBackBufferHeight = 500,
             IsFullScreen = false, PreferredDepthStencilFormat = DepthFormat.None,
             GraphicsProfile = GraphicsProfile.HiDef
         };
@@ -59,16 +63,40 @@ public class Profanity : Game
         desktopRect = new Rectangle(0, 0, pp.BackBufferWidth, pp.BackBufferHeight);
         screenRect = new Rectangle(0, 0, screenW, screenH);
         _camera = new Camera(gpu, Vector3.Up);
+        _camera.position = new Vector3(-200, 40, 0);
         inp = new Input(pp, MainTarget);
-        _device = _graphics.GraphicsDevice;
         base.Initialize();
+    }
+    private void SetVertices()
+    {
+        _vert = new VertexPositionColor[6];
+        _vert[0].Position = new Vector3(100, 0, 100);
+        _vert[0].Color = Color.Green;
+        _vert[1].Position = new Vector3(100, 0, -100);
+        _vert[1].Color = Color.Green;
+        _vert[2].Position = new Vector3(-100, 0, -100);
+        _vert[2].Color = Color.Green;
+        _vert[3].Position = new Vector3(100, 0, 100);
+        _vert[3].Color = Color.Green;
+        _vert[4].Position = new Vector3(-100, 0, 100);
+        _vert[4].Color = Color.Green;
+        _vert[5].Position = new Vector3(-100, 0, -100);
+        _vert[5].Color = Color.Green;
     }
     protected override void LoadContent()
     {
-        effect = Content.Load<Effect>("effects");
+        effect = Content.Load<Effect>("_Effects/effects");
 
-        obj.AddComponent<Model3D>().SetModel("kuklafbx", effect);
+        obj.AddComponent<Model3D>().SetModel("kuklafbx");
+        obj.position.Y = 2;
+        obj2.AddComponent<Model3D>().SetModel("drz");
+        obj2.position = new Vector3(0, 2, 30);
+        obj2.scale = Vector3.One * 2;
+
+        SetVertices();
     }
+
+    
 
     protected override void Update(GameTime gameTime)
     {
@@ -76,80 +104,72 @@ public class Profanity : Game
         _camera.UpdateCamera(gpu);
         if (inp.KeyDown(Keys.Escape))
             Exit();
-        if (GamePad.GetState(0).Triggers.Right > 0.5f)
-        {
-            _camera.target += new Vector3(-GamePad.GetState(0).ThumbSticks.Left.X * 4, GamePad.GetState(0).ThumbSticks.Right.Y * 2,
+        camAngle -= GamePad.GetState(0).ThumbSticks.Right.X / 10;
+        camAngle += inp.horizontalDelta/ 10;
+        _camera.position += 
+            new Vector3(-GamePad.GetState(0).ThumbSticks.Left.X * 4, GamePad.GetState(0).ThumbSticks.Right.Y * 2,
                 -GamePad.GetState(0).ThumbSticks.Left.Y * 4);
-        }else
+        Vector3 tempPos = Vector3.Zero;
+        if (inp.KeyDown(Keys.S))
         {
-            _camera.GetComponent<Transform>().position += new Vector3(-GamePad.GetState(0).ThumbSticks.Left.X * 2, GamePad.GetState(0).ThumbSticks.Right.Y *4,
-                -GamePad.GetState(0).ThumbSticks.Left.Y * 4);
+            tempPos -= _camera.target - _camera.position;
         }
-
+        if (inp.KeyDown(Keys.A))
+        {
+            tempPos += Vector3.Transform(_camera.target - _camera.position, Matrix.CreateRotationY(MathF.PI/2));
+        }
+        if (inp.KeyDown(Keys.D))
+        {
+            tempPos -= Vector3.Transform(_camera.target - _camera.position, Matrix.CreateRotationY(MathF.PI/2));
+        }
+        if (inp.KeyDown(Keys.W))
+        {
+            tempPos += _camera.target - _camera.position;
+        }
+        _camera.position += tempPos;
+        _camera.target = _camera.position + new Vector3((float)Math.Sin(MathHelper.ToRadians(camAngle)), 0, (float)Math.Cos(MathHelper.ToRadians(camAngle)));
+        
+        
         base.Update(gameTime);
     }
 
     private void Set3DStates()
-    {
-        gpu.BlendState = BlendState.NonPremultiplied; 
-        gpu.DepthStencilState = DepthStencilState.Default;
-        if (gpu.RasterizerState.CullMode == CullMode.None)
-        {
-            RasterizerState rs = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
-            gpu.RasterizerState = rs;
-        }
+    {  
+        gpu.BlendState = BlendState.NonPremultiplied;   
+        gpu.DepthStencilState = DepthStencilState.Default;  
+        RasterizerState rs = new RasterizerState();  
+        rs.FillMode = FillMode.Solid;  
+        if (gpu.RasterizerState.CullMode == CullMode.None)  
+        {  
+            rs.CullMode = CullMode.CullCounterClockwiseFace;  
+            gpu.RasterizerState = rs;  
+        }  
     }
-
-    private void DrawModel2(Model model)
-    {
-        Matrix[] modelTransforms = new Matrix[model.Bones.Count];
-        model.CopyAbsoluteBoneTransformsTo(modelTransforms);
-        
-        foreach (ModelMesh mesh in model.Meshes)
-        {
-            foreach (ModelMeshPart meshPart in mesh.MeshParts)
-            {
-                var effect2 = meshPart.Effect;
-
-                BasicEffect basicEffect = effect2 as BasicEffect;
-                if (basicEffect != null)
-                {
-                    basicEffect.World = modelTransforms[mesh.ParentBone.Index] * Matrix.CreateScale(new Vector3(0.01f,0.01f,0.01f)) * Matrix.Identity;
-                    basicEffect.EnableDefaultLighting();
-                    basicEffect.DirectionalLight0.Direction = new Vector3(4, -1, 2);
-                    basicEffect.Projection = _camera.proj;
-                    basicEffect.View = _camera.view;
-                    basicEffect.Alpha = 1.0f;
-                }
-                else
-                {
-                    effect2.CurrentTechnique = effect2.Techniques["Colored"];
-                    effect2.Parameters["xEnableLighting"].SetValue(true);
-                    effect2.Parameters["xLightDirection"].SetValue(new Vector3(0,-2,5));
-                    effect2.Parameters["xWorld"].SetValue(modelTransforms[mesh.ParentBone.Index] * Matrix.Identity);
-                    effect2.Parameters["xView"].SetValue(_camera.view);
-                    effect2.Parameters["xProjection"].SetValue(_camera.proj);
-                }
-                gpu.SetVertexBuffer(meshPart.VertexBuffer);
-                gpu.Indices = meshPart.IndexBuffer;
-                foreach (var pass in effect2.CurrentTechnique.Passes)    
-                {
-                    pass.Apply();
-                    gpu.DrawIndexedPrimitives(PrimitiveType.TriangleList, meshPart.VertexOffset, meshPart.StartIndex, meshPart.PrimitiveCount);
-                }
-            }
-        }
-    }
-
     protected override void Draw(GameTime gameTime)
     {
         gpu.SetRenderTarget(MainTarget);
         Set3DStates();
         gpu.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
-
-        DrawModel2(Content.Load<Model>("drz"));
-        //obj.Draw(_camera);
         
+        
+        obj.Draw();
+        obj2.Draw();
+        
+        RasterizerState rs = new RasterizerState();
+        rs.CullMode = CullMode.None;
+        rs.FillMode = FillMode.Solid;
+        gpu.RasterizerState = rs;
+        
+        
+        effect.CurrentTechnique = effect.Techniques["ColoredNoShading"];
+        effect.Parameters["xView"].SetValue(_camera.view);
+        effect.Parameters["xProjection"].SetValue(_camera.proj);
+        effect.Parameters["xWorld"].SetValue(Matrix.Identity);
+        foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            gpu.DrawUserPrimitives(PrimitiveType.TriangleList, _vert, 0, _vert.Length/3, VertexPositionColor.VertexDeclaration);
+        }
         gpu.SetRenderTarget(null);
         _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Opaque, SamplerState.LinearWrap, DepthStencilState.None,
             RasterizerState.CullNone);

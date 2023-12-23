@@ -17,15 +17,15 @@ public class Camera : Obj
     public Camera(GraphicsDevice gpu, Vector3 upDir)
     {
         up = upDir;
-        GetComponent<Transform>().position = new Vector3(0, 0, 10);
+        position = new Vector3(0, 0, 10);
         target = new Vector3(0, 0, 0);
-        view = Matrix.CreateLookAt(GetComponent<Transform>().position, target, up);
+        view = Matrix.CreateLookAt(position, target, up);
         proj = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, gpu.Viewport.AspectRatio, 0.1f, FarPlane);
         view_proj = view * proj;
         unit_direction = view.Forward; unit_direction.Normalize();
     }
     public void UpdateCamera(GraphicsDevice gpu){
-        view = Matrix.CreateLookAt(GetComponent<Transform>().position, target, up);
+        view = Matrix.CreateLookAt(position, target, up);
         proj = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, gpu.Viewport.AspectRatio, 0.1f, FarPlane);
         view_proj = view * proj;
     }

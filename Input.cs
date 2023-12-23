@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using System.Security;
 using Microsoft.Xna.Framework;
@@ -17,11 +18,12 @@ public class Input
     public bool prev_shift_down, prev_ctrl_down, prev_alt_down;
     
     //Mouse
-    public MouseState ms, pms;
+    public MouseState ms = Mouse.GetState(), pms;
     public bool leftClick, middleClick, rightClick, leftDown, middleDown, rightDown;
     public int mouseX, mouseY;
-    public Vector2 mosPos;
+    public Vector2 mosPos, oldMosPos;
     public Point mp;
+    public float horizontalDelta = 0;
 
     private float screenScaleX, screenScaleY;
 
@@ -29,31 +31,33 @@ public class Input
     {
         screenScaleX = 1.0f / ((float)pp.BackBufferWidth / target.Width);
         screenScaleY = 1.0f / ((float)pp.BackBufferHeight / target.Height);
+        mosPos = new Vector2(Mouse.GetState().Position.X * screenScaleX, Mouse.GetState().Position.Y * screenScaleY);
+        oldMosPos = mosPos;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool KeyPress(Keys k)
     {
-        if (kb.IsKeyDown(k) && pkb.IsKeyUp(k)) return true;
-        else return false;
+        return kb.IsKeyDown(k) && pkb.IsKeyUp(k);
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool KeyDown(Keys k)
     {
-        if (kb.IsKeyDown(k)) return true;
-        else return false;
+        return kb.IsKeyDown(k);
     }
 
     public void Update()
     {
+        
         prev_alt_down = alt_down;
         prev_shift_down = shift_down;
         prev_ctrl_down = ctrl_down;
         pkb = kb;
         pms = ms;
+        
         kb = Keyboard.GetState();
         ms = Mouse.GetState();
-        
+        horizontalDelta = pms.X - ms.X;
         //Keyboard 
         shift_down = shift_press = ctrl_down = ctrl_press = alt_down = alt_press = false;
         if (kb.IsKeyDown(Keys.LeftShift) || kb.IsKeyDown(Keys.RightShift)) shift_down = true;
@@ -65,9 +69,13 @@ public class Input
         
         
         //Mouse
+        oldMosPos = new Vector2(pms.Position.X * screenScaleX, pms.Position.Y * screenScaleY);
         mosPos = new Vector2(ms.Position.X * screenScaleX, ms.Position.Y * screenScaleY);
         mouseX = (int)mosPos.X;
         mouseY = (int)mosPos.Y;
+        
+        Console.Write(oldMosPos + " ");
+        Console.WriteLine(mosPos);
         mp = new Point(mouseX, mouseY);
         if (ms.LeftButton == ButtonDown) leftDown = true;
         if (ms.MiddleButton == ButtonDown) middleDown = true;
@@ -76,8 +84,5 @@ public class Input
         if (middleDown && pms.MiddleButton == ButtonUp) middleClick = true;
         if (middleDown && pms.MiddleButton == ButtonUp) middleClick = true;
         if (rightDown && pms.RightButton == ButtonUp) rightClick = true;
-        
-
-
     }
 }

@@ -13,6 +13,10 @@ public class Obj
     public List<Component> components = new List<Component>();
     public Obj GameObject;
     public Obj[] ChildObjects;
+    public Vector3 position;
+    public Vector3 rotation;
+    public Vector3 scale;
+
 
     public Obj()
     {
@@ -27,7 +31,9 @@ public class Obj
     public void Inst()
     {
         GameObject = this;
-        AddComponent<Transform>();
+        position = Vector3.Zero;
+        rotation = Vector3.Zero;
+        scale = Vector3.One;
     }
 
     public bool ContainsComp<T>() where T : Component
@@ -65,37 +71,60 @@ public class Obj
 
     }
 
-    private void DrawModel(Camera camera)
+    private void DrawModel2()
     {
         Model model = GetComponent<Model3D>()._model;
-        Transform trs = GetComponent<Transform>();
-        Matrix worldMatrix = Matrix.CreateScale(new Vector3(0.010f,0.001f,0.001f) * trs.scale) * Matrix.CreateTranslation(trs.position);
+        Camera _camera = Profanity.Profanity._camera;
+        GraphicsDevice gpu = Profanity.Profanity.gpu;
         
-
+        Matrix worldMatrix = Matrix.CreateScale(new Vector3(0.1f,0.1f,0.1f) * scale) * Matrix.CreateTranslation(position);
+        
         Matrix[] modelTransforms = new Matrix[model.Bones.Count];
         model.CopyAbsoluteBoneTransformsTo(modelTransforms);
-
+        
         foreach (ModelMesh mesh in model.Meshes)
         {
-            foreach (Effect currentEffect in mesh.Effects)
+            foreach (ModelMeshPart meshPart in mesh.MeshParts)
             {
-                currentEffect.CurrentTechnique = currentEffect.Techniques["Colored"];
-                currentEffect.Parameters["xEnableLighting"].SetValue(true);
-                currentEffect.Parameters["xAmbient"].SetValue(0.9f);
-                currentEffect.Parameters["xWorld"].SetValue(modelTransforms[mesh.ParentBone.Index] * worldMatrix);
-                currentEffect.Parameters["xView"].SetValue(camera.view);
-                currentEffect.Parameters["xProjection"].SetValue(camera.proj);
+                var effect2 = meshPart.Effect;
+
+                BasicEffect basicEffect = effect2 as BasicEffect;
+                if (basicEffect != null)
+                {
+                    basicEffect.World = modelTransforms[mesh.ParentBone.Index] * worldMatrix;
+                    basicEffect.EnableDefaultLighting();
+                    basicEffect.DirectionalLight0.Direction = new Vector3(4, -1, 2);
+                    basicEffect.DirectionalLight0.DiffuseColor = new Vector3(1f, 1, 1f);
+                    basicEffect.EmissiveColor = new Vector3(0.1f, 0.1f, 0.1f);
+                    basicEffect.Projection = _camera.proj;
+                    basicEffect.View = _camera.view;
+                    basicEffect.Alpha = 1.0f;
+                }
+                else
+                {
+                    effect2.CurrentTechnique = effect2.Techniques["Colored"];
+                    effect2.Parameters["xEnableLighting"].SetValue(true);
+                    effect2.Parameters["xLightDirection"].SetValue(new Vector3(0,-2,5));
+                    effect2.Parameters["xWorld"].SetValue(modelTransforms[mesh.ParentBone.Index] * Matrix.Identity);
+                    effect2.Parameters["xView"].SetValue(_camera.view);
+                    effect2.Parameters["xProjection"].SetValue(_camera.proj);
+                }
+                gpu.SetVertexBuffer(meshPart.VertexBuffer);
+                gpu.Indices = meshPart.IndexBuffer;
+                foreach (var pass in effect2.CurrentTechnique.Passes)    
+                {
+                    pass.Apply();
+                    gpu.DrawIndexedPrimitives(PrimitiveType.TriangleList, meshPart.VertexOffset, meshPart.StartIndex, meshPart.PrimitiveCount);
+                }
             }
-            mesh.Draw();
         }
     }
-    
 
-    public void Draw(Camera camera)
+    public void Draw()
     {
         if (ContainsComp<Model3D>())
         {
-            DrawModel(camera);
+            DrawModel2();
         }
     }
 }
