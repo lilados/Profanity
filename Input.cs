@@ -74,8 +74,6 @@ public class Input
         mouseX = (int)mosPos.X;
         mouseY = (int)mosPos.Y;
         
-        Console.Write(oldMosPos + " ");
-        Console.WriteLine(mosPos);
         mp = new Point(mouseX, mouseY);
         if (ms.LeftButton == ButtonDown) leftDown = true;
         if (ms.MiddleButton == ButtonDown) middleDown = true;

@@ -12,10 +12,24 @@ public class Obj
 {
     public List<Component> components = new List<Component>();
     public Obj GameObject;
+
+    public String meshFile
+    {
+        set
+        {
+            objName = value;
+            GetComponent<Model3D>().SetModel(value);
+            SetCollider();
+        }
+    }
+
+    public String objName;
     public Obj[] ChildObjects;
     public Vector3 position;
     public Vector3 rotation;
     public Vector3 scale;
+
+    public BoundingBox collider;
 
 
     public Obj()
@@ -23,22 +37,46 @@ public class Obj
         Inst();
     }
 
-    public Obj(string name, string modelFile)
-    {
-        Inst();
-    }
 
     public void Inst()
     {
         GameObject = this;
+        AddComponent<Model3D>();
         position = Vector3.Zero;
         rotation = Vector3.Zero;
         scale = Vector3.One;
     }
 
+    private void SetCollider()
+    {
+        Vector3 min = new Vector3(float.MaxValue);
+        Vector3 max = new Vector3(float.MinValue);
+        Model model = GetComponent<Model3D>()._model;
+
+        foreach (ModelMesh mesh in model.Meshes)
+        {
+            foreach (ModelMeshPart part in mesh.MeshParts)
+            {
+                int vertexStride = part.VertexBuffer.VertexDeclaration.VertexStride;
+                int vertexBufferSize = part.NumVertices * vertexStride;
+
+                int vertexDataSize = vertexBufferSize / sizeof(float);
+                float[] vertexData = new float[vertexDataSize];
+                part.VertexBuffer.GetData(vertexData);
+                for (int i = 0; i < vertexDataSize; i+= vertexStride / sizeof(float))
+                {
+                    Vector3 vertex = new Vector3(vertexData[i], vertexData[i + 1], vertexData[i + 2]);
+                    min = Vector3.Min(min, vertex);
+                    max = Vector3.Max(max, vertex);
+                }
+            }
+        }
+        Console.WriteLine(objName + min + max);
+        collider = new BoundingBox(min, max);
+    }
+
     public bool ContainsComp<T>() where T : Component
     {
-
         return components.Any(c => c.GetType() == Activator.CreateInstance<T>().GetType());
     }
 
@@ -63,21 +101,22 @@ public class Obj
             }
         }
 
-        return null;
+        return AddComponent<T>();
     }
 
     public void Update()
     {
-
+        
     }
 
-    private void DrawModel2()
+    private void DrawModel()
     {
         Model model = GetComponent<Model3D>()._model;
         Camera _camera = Profanity.Profanity._camera;
         GraphicsDevice gpu = Profanity.Profanity.gpu;
         
-        Matrix worldMatrix = Matrix.CreateScale(new Vector3(0.1f,0.1f,0.1f) * scale) * Matrix.CreateTranslation(position);
+        Matrix worldMatrix = Matrix.CreateScale(0.1f * scale) * Matrix.CreateTranslation(position) * 
+                             Matrix.CreateFromYawPitchRoll(rotation.X,rotation.Y,rotation.Z);
         
         Matrix[] modelTransforms = new Matrix[model.Bones.Count];
         model.CopyAbsoluteBoneTransformsTo(modelTransforms);
@@ -87,14 +126,14 @@ public class Obj
             foreach (ModelMeshPart meshPart in mesh.MeshParts)
             {
                 var effect2 = meshPart.Effect;
-
-                BasicEffect basicEffect = effect2 as BasicEffect;
+                BasicEffect basicEffect = (BasicEffect)effect2;
                 if (basicEffect != null)
                 {
                     basicEffect.World = modelTransforms[mesh.ParentBone.Index] * worldMatrix;
                     basicEffect.EnableDefaultLighting();
                     basicEffect.DirectionalLight0.Direction = new Vector3(4, -1, 2);
                     basicEffect.DirectionalLight0.DiffuseColor = new Vector3(1f, 1, 1f);
+                    basicEffect.DirectionalLight0.SpecularColor = new Vector3(0.6f, 0.3f, 1);
                     basicEffect.EmissiveColor = new Vector3(0.1f, 0.1f, 0.1f);
                     basicEffect.Projection = _camera.proj;
                     basicEffect.View = _camera.view;
@@ -124,7 +163,7 @@ public class Obj
     {
         if (ContainsComp<Model3D>())
         {
-            DrawModel2();
+            DrawModel();
         }
     }
 }

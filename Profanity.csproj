@@ -17,6 +17,7 @@
         <None Remove="Content\kuklafbx.fbx" />
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="MGCB.Windows" Version="3.5.1.1" />
         <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303"/>
         <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303"/>
     </ItemGroup>
